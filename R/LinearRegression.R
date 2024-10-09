@@ -43,7 +43,7 @@ linreg <- function(formula, data) {
   sigma2 <- sum(resid^2) / (n - p)
 
   # Variance of betas
-  var_beta <- sigma2 * solve(t(X) %*% X)
+  var_beta <- sigma2 * solve(R) %*% t(solve(R))
 
   # Return S3 object of class linreg
   return(structure(list(
