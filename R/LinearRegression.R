@@ -71,8 +71,11 @@ print <- function(x) {
 
 #' @rdname print
 #'
-#' @export
+#' @method print linreg
 print.linreg <- function(x) {
+  if (!inherits(x, "linreg")) {
+    stop("This method is only for objects of class linreg.")
+  }
   cat(paste0("linreg(formula = ", deparse(x$formula), ", data = ", x$name, ")"))
   cat("\n\nCoefficients:\n")
   cat(names(x$coefficients))
@@ -84,7 +87,7 @@ print.linreg <- function(x) {
 #' Plots the Residuals vs. Fitted & Scale-Location plots with ggplot2.
 #'
 #' @param x An S3 object of class linreg.
-#' @export plot
+#' @export
 #' @importFrom ggplot2 aes
 #' @importFrom ggplot2 geom_point
 #' @importFrom ggplot2 geom_hline
@@ -102,6 +105,9 @@ plot <- function(x) {
 #'
 #' @export
 plot.linreg <- function(x) {
+  if (!inherits(x, "linreg")) {
+    stop("This method is only for objects of class linreg.")
+  }
   data <- x$data
   y_hat <- x$fitted_values
   residuals <- x$residuals
@@ -115,8 +121,7 @@ plot.linreg <- function(x) {
   obs <- 1:length(x$residuals)
 
   # Create data frame for plotting
-  plot_data <- data.frame(y_hat, residuals, std_residuals, outl, obs
-  )
+  plot_data <- data.frame(y_hat, residuals, std_residuals, outl, obs)
 
   # Residuals vs Fitted values
   p1 <- ggplot2::ggplot(plot_data, aes(x = y_hat, y = residuals)) +
@@ -158,7 +163,7 @@ plot.linreg <- function(x) {
 #'
 #' @param x An S3 object of class linreg.
 #' @return A vector of residuals.
-#' @export resid
+#' @export
 resid <- function(x) {
   UseMethod("resid")
 }
@@ -167,6 +172,9 @@ resid <- function(x) {
 #'
 #' @export
 resid.linreg <- function(x) {
+  if (!inherits(x, "linreg")) {
+    stop("This method is only for objects of class linreg.")
+  }
   return(as.vector(x$residuals))
 }
 
@@ -174,7 +182,7 @@ resid.linreg <- function(x) {
 #'
 #' @param x An S3 object of class linreg.
 #' @return A named vector of coefficients.
-#' @export coef
+#' @export
 coef <- function(x) {
   UseMethod("coef")
 }
@@ -184,6 +192,9 @@ coef <- function(x) {
 #' @export
 
 coef.linreg <- function(x) {
+  if (!inherits(x, "linreg")) {
+    stop("This method is only for objects of class linreg.")
+  }
   coeff <- as.vector(x$coefficients)
   names(coeff) <- "Coefficients"
   return(coeff)
@@ -191,7 +202,7 @@ coef.linreg <- function(x) {
 
 #' Summary method for linreg class
 #' @param x An S3 object of class linreg.
-#' @export summary
+#' @export
 #' @importFrom stats pt
 summary <- function(x) {
   UseMethod("summary")
@@ -202,6 +213,9 @@ summary <- function(x) {
 #' @export
 
 summary.linreg <- function(x) {
+  if (!inherits(x, "linreg")) {
+    stop("This method is only for objects of class linreg.")
+  }
   # Calculate standard errors, t-values, and p-values
   se <- sqrt(diag(x$var_beta))
   t_values <- x$coefficients / se
@@ -245,7 +259,7 @@ summary.linreg <- function(x) {
 #' Predicted values method for linreg class
 #' @param x An S3 object of class linreg.
 #' @return A vector of predicted values.
-#' @export pred
+#' @export
 pred <- function(x) {
   UseMethod("pred")
 }
@@ -254,5 +268,8 @@ pred <- function(x) {
 #'
 #' @export
 pred.linreg <- function(x) {
+  if (!inherits(x, "linreg")) {
+    stop("This method is only for objects of class linreg.")
+  }
   return(as.vector(x$fitted_values))
 }

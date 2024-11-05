@@ -1,0 +1,169 @@
+---
+title: "Predictive Modeling with ridgereg"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Predictive Modeling with ridgereg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include=FALSE}
+library(LinearRegression)
+library(mlbench)
+library(caret)
+library(dplyr)
+library(MASS)
+```
+
+## Introduction
+
+In this vignette, we demonstrate the usage of a ridge regression function `ridgereg` to fit a predictive model on the `BostonHousing` dataset from the `mlbench` package. We will:
+ 
+1. Split the data into training and test sets.
+2. Fit a simple linear regression model and a forward selection linear regression model using the `tidymodels` package.
+3. Fit a ridge regression model using `ridgereg` for different values of the penalty parameter `lambda`.
+4. Use cross-validation to select the best `lambda` value.
+5. Compare model performance on the test dataset.
+
+## Step 1: Load and Prepare Data
+
+```{r}
+# Load the BostonHousing dataset
+data("BostonHousing")
+
+# Split data into 80% training and 20% testing
+set.seed(12121)
+trainIndex <- createDataPartition(BostonHousing$medv, p = 0.8, list = FALSE)
+trainData <- BostonHousing[trainIndex, ]
+testData <- BostonHousing[-trainIndex, ]
+```
+
+## Step 2: Train Linear Regression Models
+
+### Linear Regression with All Covariates
+
+```{r}
+# Standard linear regression model
+lm_model <- lm(medv ~ ., data = trainData)
+```
+
+### Linear Regression with Forward Selection
+
+```{r}
+# Forward selection using stepAIC
+step_model <- stepAIC(lm(medv ~ 1, data = trainData),
+  scope = list(
+    upper = lm_model,
+    lower = lm(medv ~ 1, data = trainData)
+  ),
+  direction = "forward",
+  trace = FALSE
+)
+```
+
+## Step 3: Evaluate Linear Models on Training Set
+
+```{r}
+# Predictions and RMSE for linear regression
+train_pred_lm <- stats::predict(lm_model, trainData)
+train_rmse_lm <- RMSE(train_pred_lm, trainData$medv)
+
+# Predictions and RMSE for forward selection model
+train_pred_step <- stats::predict(step_model, trainData)
+train_rmse_step <- RMSE(train_pred_step, trainData$medv)
+
+# Display RMSE values
+train_rmse_lm
+train_rmse_step
+```
+
+## Step 4: Train Ridge Regression Model Using ridgereg
+
+```{r}
+# Define a grid of lambda values to test
+lambda_grid <- seq(0, 10, length.out = 10)
+
+# Initialize an empty list to store ridge regression models for each lambda
+ridge_models <- list()
+
+# Fit ridge regression models for each lambda value
+for (lambda in lambda_grid) {
+  ridge_models[[as.character(lambda)]] <- ridgereg(medv ~ ., data = trainData, lambda = lambda)
+}
+```
+
+## Step 5: Cross-Validation to Select Best Lambda
+
+```{r}
+set.seed(123)
+folds <- createFolds(trainData$medv, k = 10, list = TRUE)
+lambda_errors <- data.frame(lambda = lambda_grid, RMSE = rep(0, length(lambda_grid)))
+
+# Perform cross-validation
+for (lambda in lambda_grid) {
+  fold_rmse <- c()
+  for (fold in folds) {
+    # Split data into training and validation sets for the current fold
+    fold_train <- trainData[-fold, ]
+    fold_valid <- trainData[fold, ]
+
+    # Train ridge model with the current lambda on fold training set
+    ridge_model <- ridgereg(medv ~ ., data = fold_train, lambda = lambda)
+
+    # Predict on fold validation set
+    fold_pred <- LinearRegression::predict(ridge_model, fold_valid)
+
+    # Calculate and store RMSE for this fold
+    fold_rmse <- c(fold_rmse, RMSE(fold_pred, fold_valid$medv))
+  }
+  # Average RMSE across all folds for this lambda
+  lambda_errors[lambda_errors$lambda == lambda, "RMSE"] <- mean(fold_rmse)
+}
+
+# Identify the best lambda (with lowest cross-validation RMSE)
+best_lambda <- lambda_errors$lambda[which.min(lambda_errors$RMSE)]
+
+# Fit the final ridge model on the entire training set with the best lambda
+final_ridge_model <- ridgereg(medv ~ ., data = trainData, lambda = best_lambda)
+```
+
+## Step 6: Evaluate All Models on Test Data
+
+```{r}
+# Predictions and RMSE for linear regression on test set
+test_pred_lm <- stats::predict(lm_model, testData)
+test_rmse_lm <- RMSE(test_pred_lm, testData$medv)
+
+# Predictions and RMSE for forward selection model on test set
+test_pred_step <- stats::predict(step_model, testData)
+test_rmse_step <- RMSE(test_pred_step, testData$medv)
+
+# Predictions and RMSE for ridge regression on test set
+test_pred_ridge <- LinearRegression::predict(final_ridge_model, testData)
+test_rmse_ridge <- RMSE(test_pred_ridge, testData$medv)
+```
+
+## Step 7: Conclusion
+
+We compared three predictive models:
+
+- A standard linear regression model with all predictors.
+- A forward selection linear regression model to select a subset of predictors.
+- A ridge regression model, where the regularization parameter (`lambda`) was selected using cross-validation.
+
+The test set RMSE values for each model are as follows:
+
+- **Linear Regression (all predictors):** `r test_rmse_lm`
+- **Forward Selection Linear Regression:** `r test_rmse_step`
+- **Ridge Regression (best lambda):** `r test_rmse_ridge`
+ 
+Based on the RMSE values, we can observe which model performed best in this scenario. Ridge regression slightly outperforms when dealing with multicollinearity or when the dataset has many predictors, as it penalizes large coefficients. However, forward selection can help in choosing only the most significant predictors, which may enhance interpretability without sacrificing much predictive performance.
+
+This approach shows how regularization techniques like ridge regression can be used to improve model performance in predictive tasks.

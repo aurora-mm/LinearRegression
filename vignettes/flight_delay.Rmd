@@ -1,0 +1,124 @@
+---
+title: "Flight Delay Prediction with ridgereg"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Flight Delay Prediction with ridgereg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+
+We will use the function `ridgereg` to predict flight delays using the `nycflights13` dataset. We will explore the weather data and flight data, create interaction effects, and evaluate the model performance.
+
+```{r setup, include=F}
+# Load necessary libraries
+library(LinearRegression)
+library(nycflights13)
+library(dplyr)
+library(caret)
+```
+
+## Data Preparation
+
+We will remove variables that are not believed to have predictive value.
+
+```{r}
+# Load the flights and weather datasets
+data("flights")
+data("weather")
+
+# Merge flights and weather data on common keys
+flights_weather <- flights %>%
+  left_join(weather, by = c("year", "month", "day", "hour", "origin"))
+
+# Selecting columns that could have predictive value
+flights_weather <- flights_weather %>%
+  dplyr::select(
+    dep_delay, arr_delay, air_time, distance,
+    temp, dewp, humid, wind_speed, wind_gust, precip, visib
+  )
+
+# Remove rows with NA values
+flights_weather <- na.omit(flights_weather)
+```
+
+## Create Interaction Effects
+
+We will create interaction effects that could be significant in predicting delays.
+
+```{r}
+# Adding interaction terms
+flights_weather <- flights_weather %>%
+  mutate(
+    wind_speed_precip = wind_speed * precip,
+    wind_speed_visib = wind_speed * visib
+  )
+```
+
+## Split Data into Train, Validation, and Test Sets
+
+We split the data into training (80%), validation (15%), and test (5%) sets.
+
+```{r}
+# Setting the seed for reproducibility
+set.seed(123)
+
+# Partition the data
+trainIndex <- createDataPartition(flights_weather$dep_delay, p = 0.8, list = FALSE)
+train_set <- flights_weather[trainIndex, ]
+temp_set <- flights_weather[-trainIndex, ]
+
+# Split the remaining data into validation and test sets
+valIndex <- createDataPartition(temp_set$dep_delay, p = 0.75, list = FALSE)
+validation_set <- temp_set[valIndex, ]
+test_set <- temp_set[-valIndex, ]
+```
+
+## Train and Evaluate Model
+
+We train ridge regression models for different values of `lambda`, and evaluate their performance on the validation set. We’ll use RMSE as our evaluation metric.
+
+```{r}
+# Define a grid of lambda values to test
+lambda_grid <- seq(0, 10, by = 0.5)
+
+# Initialize a data frame to store validation RMSE results
+rmse_results <- data.frame(lambda = lambda_grid, RMSE = NA)
+
+# Training ridge regression models
+for (i in seq_along(lambda_grid)) {
+  lambda <- lambda_grid[i]
+  # Fit the model on the training data
+  ridgereg_model <- ridgereg(dep_delay ~ ., data = train_set, lambda = lambda)
+
+  # Predict on the validation set
+  preds <- LinearRegression::predict(ridgereg_model, newdata = validation_set)
+
+  # Calculate RMSE on validation set
+  rmse_results$RMSE[i] <- sqrt(mean((validation_set$dep_delay - preds)^2))
+}
+
+# Find the optimal lambda value
+best_lambda <- rmse_results$lambda[which.min(rmse_results$RMSE)]
+```
+
+## Evaluate on Test Set
+
+Using the best lambda value, we train the model on the combined train and validation sets and evaluate it on the test set. The test RMSE with optimal lambda is then printed out.
+
+```{r}
+# Combine train and validation sets
+train_val_set <- rbind(train_set, validation_set)
+
+# Train final model with best lambda
+final_model <- ridgereg(dep_delay ~ ., data = train_val_set, lambda = best_lambda)
+
+# Predict on the test set
+test_preds <- LinearRegression::predict(final_model, newdata = test_set)
+
+# Calculate RMSE on the test set
+test_rmse <- sqrt(mean((test_set$dep_delay - test_preds)^2))
+
+cat("Test RMSE with Optimal Lambda:", test_rmse, "\n")
+```

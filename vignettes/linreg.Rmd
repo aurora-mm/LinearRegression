@@ -12,12 +12,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-
 ```
 
 ```{r setup}
 library(LinearRegression)
-
 ```
 
 # Overview
@@ -39,7 +37,6 @@ model <- linreg(Sepal.Width ~ Species, data = iris)
 
 # Print the model
 print(model)
-
 ```
 
 # Residuals and Predictions
@@ -53,7 +50,6 @@ predictions <- pred(model)
 head(coefficients)
 head(residuals)
 head(predictions)
-
 ```
 
 # Summary of the Model
@@ -62,7 +58,6 @@ The summary method provides information about the coefficients, their standard e
 
 ```{r}
 summary(model)
-
 ```
 
 # Plotting the Model
@@ -71,7 +66,6 @@ The `plot()` method provides residuals vs fitted values and standardized residua
 
 ```{r, fig.dim = c(7, 9)}
 plot(model)
-
 ```
 
 # Conclusion

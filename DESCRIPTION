@@ -1,11 +1,11 @@
 Package: LinearRegression
-Title: Handling linear regression models
+Title: Handling linear and ridge regression models
 Version: 1.0
 Date: 2024-10-01
 Description: This R package provides functionality for handling linear regression 
-    models through the utilization of QR decomposition. This package is a 
-    part of the coursework for the Advanced Programming in R course (732A94) at 
-    Linköping University.
+    models through the utilization of QR decomposition, as well as ridge regression
+    models. This package is a part of the coursework for the Advanced Programming 
+    in R course (732A94) at Linköping University.
 RoxygenNote: 7.3.2
 Encoding: UTF-8
 License: GPL-2
@@ -17,10 +17,16 @@ Roxygen: list(markdown = TRUE)
 Suggests: 
     knitr,
     rmarkdown,
+    mlbench,
+    caret,
+    MASS,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
     ggplot2,
     stats,
-    gridExtra
+    gridExtra,
+    dplyr,
+    nycflights13,
+    rlang
 VignetteBuilder: knitr
