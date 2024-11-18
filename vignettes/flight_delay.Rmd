@@ -93,7 +93,7 @@ for (i in seq_along(lambda_grid)) {
   ridgereg_model <- ridgereg(dep_delay ~ ., data = train_set, lambda = lambda)
 
   # Predict on the validation set
-  preds <- LinearRegression::predict(ridgereg_model, newdata = validation_set)
+  preds <- predict(ridgereg_model, newdata = validation_set)
 
   # Calculate RMSE on validation set
   rmse_results$RMSE[i] <- sqrt(mean((validation_set$dep_delay - preds)^2))
@@ -115,7 +115,7 @@ train_val_set <- rbind(train_set, validation_set)
 final_model <- ridgereg(dep_delay ~ ., data = train_val_set, lambda = best_lambda)
 
 # Predict on the test set
-test_preds <- LinearRegression::predict(final_model, newdata = test_set)
+test_preds <- predict(final_model, newdata = test_set)
 
 # Calculate RMSE on the test set
 test_rmse <- sqrt(mean((test_set$dep_delay - test_preds)^2))

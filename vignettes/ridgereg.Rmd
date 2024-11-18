@@ -118,7 +118,7 @@ for (lambda in lambda_grid) {
     ridge_model <- ridgereg(medv ~ ., data = fold_train, lambda = lambda)
 
     # Predict on fold validation set
-    fold_pred <- LinearRegression::predict(ridge_model, fold_valid)
+    fold_pred <- predict(ridge_model, fold_valid)
 
     # Calculate and store RMSE for this fold
     fold_rmse <- c(fold_rmse, RMSE(fold_pred, fold_valid$medv))
@@ -146,7 +146,7 @@ test_pred_step <- stats::predict(step_model, testData)
 test_rmse_step <- RMSE(test_pred_step, testData$medv)
 
 # Predictions and RMSE for ridge regression on test set
-test_pred_ridge <- LinearRegression::predict(final_ridge_model, testData)
+test_pred_ridge <- predict(final_ridge_model, testData)
 test_rmse_ridge <- RMSE(test_pred_ridge, testData$medv)
 ```
 

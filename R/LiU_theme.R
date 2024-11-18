@@ -4,7 +4,7 @@
 #' This function applies both a custom ggplot theme and a manual color scale.
 #'
 #' @return A list containing the custom theme and color scale.
-#' @export LiU_theme
+#' @export 
 #' @importFrom ggplot2 theme_grey
 #' @importFrom ggplot2 theme
 #' @importFrom ggplot2 element_text

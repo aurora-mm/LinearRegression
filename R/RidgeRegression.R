@@ -9,10 +9,11 @@
 #'
 #' @return An S3 object of class ridgereg containing the fitted model.
 #'
-#' @export ridgereg
+#' @export 
 #' @importFrom stats model.response
 #' @importFrom stats model.frame
 #' @importFrom stats sd
+#' @importFrom stats predict
 #'
 ridgereg <- function(formula, data, lambda) {
   # Validate the input
@@ -69,15 +70,9 @@ ridgereg <- function(formula, data, lambda) {
 #' Prints out the coefficients and coefficient names.
 #'
 #' @param x An S3 object of class ridgereg.
-#' @export print
-print <- function(x) {
-  UseMethod("print")
-}
-
-#' @rdname print
-#'
-#' @method print ridgereg
-print.ridgereg <- function(x) {
+#' @param ... Additional arguments (unused).
+#' @export 
+print.ridgereg <- function(x, ...) {
   if (!inherits(x, "ridgereg")) {
     stop("This method is only for objects of class ridgereg.")
   }
@@ -92,17 +87,12 @@ print.ridgereg <- function(x) {
 #'
 #' Returns the preducted values.
 #'
-#' @param x An S3 object of class ridgereg.
+#' @param object An S3 object of class ridgereg.
 #' @param newdata A data frame with new data (optional)
-#' @export
-predict <- function(x, newdata = NULL) {
-  UseMethod("predict")
-}
-
-#' @rdname predict
-#'
-#' @export
-predict.ridgereg <- function(x, newdata = NULL) {
+#' @param ... Additional arguments (unused).
+#' @export 
+predict.ridgereg <- function(object, newdata = NULL, ...) {
+  x <- object
   if (!inherits(x, "ridgereg")) {
     stop("This method is only for objects of class ridgereg.")
   }
@@ -123,13 +113,6 @@ predict.ridgereg <- function(x, newdata = NULL) {
 #' @param x An S3 object of class ridgereg.
 #' @return A named vector of coefficients.
 #' @export
-coef <- function(x) {
-  UseMethod("coef")
-}
-
-#' @rdname coef
-#'
-#' @method coef ridgereg
 coef.ridgereg <- function(x) {
   if (!inherits(x, "ridgereg")) {
     stop("This method is only for objects of class ridgereg.")

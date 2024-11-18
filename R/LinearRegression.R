@@ -8,8 +8,10 @@
 #' @param formula A formula object describing the model to be fitted.
 #' @param data A data frame containing the variables in the model.
 #' @return An S3 object of class linreg containing the fitted model.
-#' @export linreg
+#' @export 
 #' @importFrom stats model.matrix
+#' @importFrom stats resid
+
 linreg <- function(formula, data) {
   # Validate the input
   if (!inherits(formula, "formula")) {
@@ -43,7 +45,7 @@ linreg <- function(formula, data) {
   sigma2 <- sum(resid^2) / (n - p)
 
   # Variance of betas
-  var_beta <- sigma2 * solve(R) %*% t(solve(R))
+  var_beta <- chol2inv(R) * sigma2
 
   # Return S3 object of class linreg
   return(structure(list(
@@ -64,15 +66,9 @@ linreg <- function(formula, data) {
 #' Prints out the coefficients and coefficient names.
 #'
 #' @param x An S3 object of class linreg.
-#' @export print
-print <- function(x) {
-  UseMethod("print")
-}
-
-#' @rdname print
-#'
-#' @method print linreg
-print.linreg <- function(x) {
+#' @param ... Additional arguments (unused).
+#' @export
+print.linreg <- function(x, ...) {
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
   }
@@ -87,6 +83,7 @@ print.linreg <- function(x) {
 #' Plots the Residuals vs. Fitted & Scale-Location plots with ggplot2.
 #'
 #' @param x An S3 object of class linreg.
+#' @param ... Additional arguments (unused).
 #' @export
 #' @importFrom ggplot2 aes
 #' @importFrom ggplot2 geom_point
@@ -97,14 +94,7 @@ print.linreg <- function(x) {
 #' @importFrom ggplot2 geom_text
 #' @importFrom stats median
 #' @importFrom gridExtra grid.arrange
-plot <- function(x) {
-  UseMethod("plot")
-}
-
-#' @rdname plot
-#'
-#' @export
-plot.linreg <- function(x) {
+plot.linreg <- function(x, ...) {
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
   }
@@ -164,13 +154,6 @@ plot.linreg <- function(x) {
 #' @param x An S3 object of class linreg.
 #' @return A vector of residuals.
 #' @export
-resid <- function(x) {
-  UseMethod("resid")
-}
-
-#' @rdname resid
-#'
-#' @export
 resid.linreg <- function(x) {
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
@@ -183,14 +166,6 @@ resid.linreg <- function(x) {
 #' @param x An S3 object of class linreg.
 #' @return A named vector of coefficients.
 #' @export
-coef <- function(x) {
-  UseMethod("coef")
-}
-
-#' @rdname coef
-#'
-#' @export
-
 coef.linreg <- function(x) {
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
@@ -201,18 +176,12 @@ coef.linreg <- function(x) {
 }
 
 #' Summary method for linreg class
-#' @param x An S3 object of class linreg.
+#' @param object An S3 object of class linreg.
+#' @param ... Additional arguments (unused).
 #' @export
 #' @importFrom stats pt
-summary <- function(x) {
-  UseMethod("summary")
-}
-
-#' @rdname summary
-#'
-#' @export
-
-summary.linreg <- function(x) {
+summary.linreg <- function(object, ...) {
+  x <- object
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
   }
@@ -223,21 +192,13 @@ summary.linreg <- function(x) {
 
   # Function for showing asterisks
   fixstars <- function(p_values) {
-    for (i in seq_along(p_values)) {
-      if (p_values[i] > 0.1) {
-        return(" ")
-      }
-      if (p_values[i] > 0.05) {
-        return(".")
-      }
-      if (p_values[i] > 0.01) {
-        return("*")
-      }
-      if (p_values[i] > 0.001) {
-        return("**")
-      }
-    }
-    return("***")
+    sapply(p_values, function(p) {
+      if (p > 0.1) return(" ")
+      if (p > 0.05) return(".")
+      if (p > 0.01) return("*")
+      if (p > 0.001) return("**")
+      return("***")
+    })
   }
 
   # Derive asterisks from p-values
@@ -253,7 +214,7 @@ summary.linreg <- function(x) {
   )
   print(coef_table)
 
-  cat("\nResidual standard error:", round(sqrt(x$sigma2), digits = 3), "on", x$df, "degrees of freedom\n")
+  cat("\nResidual standard error:", round(sqrt(x$sigma2), digits = 3), "on", x$df_residual, "degrees of freedom\n")
 }
 
 #' Predicted values method for linreg class
