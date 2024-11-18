@@ -158,7 +158,9 @@ resid.linreg <- function(x) {
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
   }
-  return(as.vector(x$residuals))
+  residuals <- as.vector(x$residuals)
+  names(residuals) <- seq_along(residuals)
+  return(residuals)
 }
 
 #' Coefficients method for linreg class
@@ -232,5 +234,7 @@ pred.linreg <- function(x) {
   if (!inherits(x, "linreg")) {
     stop("This method is only for objects of class linreg.")
   }
-  return(as.vector(x$fitted_values))
+  fitted_values <- as.vector(x$fitted_values)
+  names(fitted_values) <- seq_along(fitted_values)
+  return(fitted_values)
 }
